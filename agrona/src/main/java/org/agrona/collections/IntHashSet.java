@@ -272,8 +272,8 @@ public class IntHashSet extends AbstractSet<Integer>
             if (oldValue == value)
             {
                 values[index] = MISSING_VALUE;
-                compactChain(index);
                 sizeOfArrayValues--;
+                compactChain(index);
                 return true;
             }
 
@@ -592,9 +592,7 @@ public class IntHashSet extends AbstractSet<Integer>
 
         if (removed && sizeOfArrayValues > 0)
         {
-            @DoNotSub final int newCapacity =
-                Math.max(DEFAULT_INITIAL_CAPACITY, findNextPositivePowerOfTwo(sizeOfArrayValues));
-            rehash(newCapacity);
+            rehash(values.length);
         }
 
         if (containsMissingValue && !coll.contains(MISSING_VALUE))
@@ -630,12 +628,10 @@ public class IntHashSet extends AbstractSet<Integer>
 
         if (removed && sizeOfArrayValues > 0)
         {
-            @DoNotSub final int newCapacity =
-                Math.max(DEFAULT_INITIAL_CAPACITY, findNextPositivePowerOfTwo(sizeOfArrayValues));
-            rehash(newCapacity);
+            rehash(values.length);
         }
 
-        if (containsMissingValue && !coll.contains(MISSING_VALUE))
+        if (containsMissingValue && !coll.containsMissingValue)
         {
             containsMissingValue = false;
             removed = true;
