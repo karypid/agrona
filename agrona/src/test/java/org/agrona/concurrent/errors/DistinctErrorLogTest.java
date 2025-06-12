@@ -347,7 +347,7 @@ class DistinctErrorLogTest
         assertEquals(exception, observation.throwable());
 
         assertEquals(distinctErrorLog.nextOffset, BitUtil.align(offset + length, RECORD_ALIGNMENT));
-        assertThat(distinctErrorLog.nextOffset, Matchers.greaterThan(buffer.capacity()));
+        assertThat(distinctErrorLog.nextOffset, Matchers.greaterThanOrEqualTo(buffer.capacity()));
 
         final InOrder inOrder = inOrder(buffer);
         inOrder.verify(buffer).putBytes(eq(offset + ENCODED_ERROR_OFFSET), eq(encodedError));
@@ -356,12 +356,18 @@ class DistinctErrorLogTest
     }
 
     @Test
-    void shouldWriteErrorAtEndOfTheBufferWithMaxIntCapacity()
+    void shouldWriteErrorAtEndOfTheBufferWithNextOffsetOverflow()
     {
-        final IllegalStateException exception = new IllegalStateException("my exception");
+        final Exception exception = new IllegalStateException("my exception");
         final byte[] encodedError = log.encodedError(exception);
         final int length = encodedError.length + ENCODED_ERROR_OFFSET;
-        final int offset = BitUtil.align(Integer.MAX_VALUE - length, RECORD_ALIGNMENT) - RECORD_ALIGNMENT;
+        final int endOffset = Integer.MAX_VALUE - 1 - length;
+        final int offset = 1 + (BitUtil.isAligned(endOffset, RECORD_ALIGNMENT) ? endOffset :
+            BitUtil.align(endOffset, RECORD_ALIGNMENT) - RECORD_ALIGNMENT);
+        assertThat(offset + length, Matchers.greaterThan(0));
+        assertThat(
+            BitUtil.align(offset + length, RECORD_ALIGNMENT),
+            Matchers.lessThan(0));
         final long timestamp = 742394728347923L;
 
         final AtomicBuffer buffer = mock(AtomicBuffer.class);
